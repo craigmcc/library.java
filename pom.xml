@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2020 craigmcc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+    <!-- Project Configuration -->
+
+    <parent>
+        <groupId>org.craigmcc.projects</groupId>
+        <artifactId>projects-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.craigmcc.library</groupId>
+    <artifactId>library</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Personal Library Parent</name>
+    <description>
+        Personal Library Parent Module.
+
+        WARNING:  Do not use more than one "model-foo" dependency (such as
+        model-jdbc and model-jpa) in the same application, as they declare
+        the same package name(s).  Pick the one for the persistence style
+        you will be implementing.
+    </description>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <modules>
+<!--        <module>model-jdbc</module>-->
+        <module>model-jpa</module>
+    </modules>
+
+    <!-- Dependencies -->
+    <dependencies>
+    </dependencies>
+
+    <!-- Properties -->
+    <properties>
+
+        <!-- Version Dependencies -->
+
+    </properties>
+
+</project>
