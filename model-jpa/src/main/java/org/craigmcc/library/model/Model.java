@@ -72,7 +72,7 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
 
     @Column(
             name = VERSION_COLUMN,
-            nullable = false
+            nullable = true // Will be auto-populated by the database
     )
     @Schema(description = "Entity version for optimistic locking.")
     private Long version;
