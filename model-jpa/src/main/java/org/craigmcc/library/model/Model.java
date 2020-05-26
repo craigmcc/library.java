@@ -29,6 +29,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -71,11 +72,11 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
     private LocalDateTime updated;
 
     @Column(
-            name = VERSION_COLUMN,
-            nullable = true // Will be auto-populated by the database
+            name = VERSION_COLUMN
     )
+    @Version
     @Schema(description = "Entity version for optimistic locking.")
-    private Long version;
+    private Integer version;
 
     // Static Variables ------------------------------------------------------
 
@@ -105,11 +106,11 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
         this.updated = updated;
     }
 
-    public Long getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(Long version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 
