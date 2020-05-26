@@ -17,12 +17,8 @@ package org.craigmcc.library.model;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.craigmcc.library.model.Model.ID_COLUMN;
-
-//@Ignore("Equals Verifier does not like using @Id column")
 public class ModelUnitTest {
 
     @Test
