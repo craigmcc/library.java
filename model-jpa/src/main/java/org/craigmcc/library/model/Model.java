@@ -129,7 +129,8 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
      * <p>Copy user-modifiable properties from the <code>from</code>
      * object into the current object.  This <strong>MUST</strong>
      * be implemented by all concrete Model classes.</p>
-     * @param from
+     *
+     * @param from Object to copy from into this object
      */
     public abstract void copy(M from);
 
