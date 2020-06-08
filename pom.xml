@@ -51,6 +51,7 @@
     <modules>
         <module>model-jdbc</module>
         <module>model-jpa</module>
+        <module>sql</module>
     </modules>
 
     <!-- Dependencies -->
