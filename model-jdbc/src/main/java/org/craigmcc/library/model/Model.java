@@ -21,61 +21,24 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.Version;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-
-import static javax.persistence.InheritanceType.TABLE_PER_CLASS;
 
 /**
  * <p>Abstract base class for model objects.</p>
  */
-@Entity
-@Inheritance(strategy = TABLE_PER_CLASS)
-@Access(AccessType.FIELD)
 public abstract class Model<M> implements Cloneable, Constants, Serializable {
 
     // Instance Variables ----------------------------------------------------
 
-    @Column(
-            name = ID_COLUMN,
-            nullable = false,
-            unique = true
-    )
-    @GeneratedValue
-    @Id
     @Schema(description = "Primary key for this model object.")
     private Long id;
 
-    @Column(
-            columnDefinition = "TIMESTAMP",
-            name = PUBLISHED_COLUMN,
-            nullable = false
-    )
     @Schema(description = "Date and time this model object was initially created.")
     private LocalDateTime published;
 
-    @Column(
-            columnDefinition = "TIMESTAMP",
-            name = UPDATED_COLUMN,
-            nullable = false
-    )
     @Schema(description = "Date and time this model object was most recently updated.")
     private LocalDateTime updated;
-
-    @Column(
-            name = VERSION_COLUMN
-    )
-    @Version
-    @Schema(description = "Entity version for optimistic locking.")
-    private Integer version;
 
     // Static Variables ------------------------------------------------------
 
@@ -103,14 +66,6 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
 
     public void setUpdated(LocalDateTime updated) {
         this.updated = updated;
-    }
-
-    public Integer getVersion() {
-        return version;
-    }
-
-    public void setVersion(Integer version) {
-        this.version = version;
     }
 
 // Public Methods --------------------------------------------------------
@@ -144,7 +99,7 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
         }
         return new EqualsBuilder()
                 .append(this.id, that.id)
-                // published/updated/version are deliberately omitted
+                // published/updated are deliberately omitted
                 .isEquals();
     }
 
@@ -152,7 +107,7 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
     public int hashCode() {
         return new HashCodeBuilder()
                 .append(id)
-                // published/updated/version are deliberately omitted
+                // published/updated are deliberately omitted
                 .toHashCode();
     }
 
@@ -162,7 +117,6 @@ public abstract class Model<M> implements Cloneable, Constants, Serializable {
                 .append(ID_COLUMN, this.id)
                 .append(PUBLISHED_COLUMN, this.published)
                 .append(UPDATED_COLUMN, this.updated)
-                .append(VERSION_COLUMN, this.version)
                 .toString();
     }
 

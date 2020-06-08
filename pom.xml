@@ -36,7 +36,7 @@
     <description>
         Personal Library Parent Module.
 
-        WARNING:  Do not use more than one "model-foo" dependency (such as
+        WARNING:  Do not use more than one "model-xxx" dependency (such as
         model-jdbc and model-jpa) in the same application, as they declare
         the same package name(s).  Pick the one for the persistence style
         you will be implementing.
@@ -49,7 +49,7 @@
     </licenses>
 
     <modules>
-<!--        <module>model-jdbc</module>-->
+        <module>model-jdbc</module>
         <module>model-jpa</module>
     </modules>
 
@@ -60,7 +60,12 @@
     <!-- Properties -->
     <properties>
 
+        <!-- Maven Configuration -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <!-- Version Dependencies -->
+        <model-jdbc.version>1.0.0-SNAPSHOT</model-jdbc.version>
+        <model-jpa.version>1.0.0-SNAPSHOT</model-jpa.version>
 
     </properties>
 
