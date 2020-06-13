@@ -19,13 +19,11 @@ import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>Builder that generates a {@link PreparedStatement} for an SQL INSERT.</p>
  *
- * <p><strong>EXAMPLE:</strong></p>
+ * <p><strong>EXAMPLE 1:</strong></p>
  *
  * <code>
  *     InsertBuilder builder = new InsertBuilder("mytable")
@@ -39,8 +37,27 @@ import java.util.List;
  *     INSERT INTO mytable (firstName, lastName) VALUES (?, ?)
  * </code></p>
  *
+ * <p><strong>EXAMPLE 2:</strong></p>
+ *
+ * <code>
+ *     InsertBuilder builder = new InsertBuilder("mytable")
+ *       .literal("firstName", "Fred")
+ *       .pair("lastName", "Flintstone")
+ *       .build(connection);
+ * </code>
+ *
+ * <p>will result in PreparedStatement:
+ * <code>
+ *     INSERT INTO mytable (firstName, lastName) VALUES ('Fred', ?)
+ * </code></p>
+ *
  * <p><strong>USAGE NOTES:</strong></p>
  * <ul>
+ *     <li>Some of the methods defined below are only relevant for certain
+ *         SQL statement types (DELETE, INSERT, SELECT, UPDATE).  Using them
+ *         on a different type will cause that information to be ignored.
+ *         See the detailed documentation for each method that is only
+ *         relevant for some statement types.</li>
  *     <li>In order to to retrieve the generated primary key for the new row,
  *         you will need to save a reference to the generated
  *         <code>PreparedStatement</code>, and call <code>getGeneratedKeys()</code>
@@ -110,13 +127,7 @@ public class InsertBuilder extends AbstractStatementBuilder<InsertBuilder> {
         } else {
             statement = connection.prepareStatement(sql);
         }
-        if (params.size() > 0) {
-            for (int i = 0; i < params.size(); i++) {
-                if (statement != null) { // TODO - Yay Mockito :-(
-                    statement.setObject(i + 1, params.get(i));
-                }
-            }
-        }
+        applyParams(statement);
         return statement;
 
     }

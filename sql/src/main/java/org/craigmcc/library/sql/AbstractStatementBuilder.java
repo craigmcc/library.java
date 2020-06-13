@@ -15,7 +15,6 @@
  */
 package org.craigmcc.library.sql;
 
-import org.craigmcc.library.model.Constants;
 import org.craigmcc.library.model.Model;
 
 import javax.validation.constraints.NotNull;
@@ -28,11 +27,22 @@ import static org.craigmcc.library.model.Constants.ID_COLUMN;
 import static org.craigmcc.library.model.Constants.PUBLISHED_COLUMN;
 import static org.craigmcc.library.model.Constants.UPDATED_COLUMN;
 
-public abstract class AbstractStatementBuilder<B extends StatementBuilder> implements StatementBuilder {
+/**
+ * <p>Abstract base class for builders that generate SQL statements.  Note that
+ * many of the methods apply only to certain SQL statement types (DELETE, INSERT,
+ * SELECT, UPDATE).  Check the documentation for each method to see whether it is
+ * relevant or not for the builder you are creating.</p>
+ *
+ * @param <B> The builder class that is subclassing this base class
+ */
+public abstract class AbstractStatementBuilder<B extends StatementBuilder>
+        implements StatementBuilder {
 
     // Instance Variables ----------------------------------------------------
 
+    protected final List<Clause> clauses = new ArrayList<>();
     protected final List<String> groupBys = new ArrayList<>();
+    protected boolean or = false;
     protected final List<OrderBy> orderBys = new ArrayList<>();
     protected final List<Pair> pairs = new ArrayList<>();
     protected final List<Object> params = new ArrayList<>();
@@ -42,30 +52,115 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
 
     // Constructors ----------------------------------------------------------
 
-    public AbstractStatementBuilder(@NotNull String table) { // TODO - support multiples
+    // TODO - support multiple tables for joins?  With abbreviations for columns?
+    public AbstractStatementBuilder(@NotNull String table) {
         tables.add(table);
     }
 
     // Public Methods --------------------------------------------------------
 
     /**
-     * <p>Store the name of the column by which results of a SELECT statement
-     * should be grouped.  These will be applied to a SELECT statement in the
-     * order that they were added.</p>
+     * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE.</p>
      *
-     * @param column Column name on which to group
+     * <p>Store the columns and operator for a condition that must be
+     * matched in order to match a row.  Such conditions are ignored
+     * if <code>primary()</code> has been called.</p>
+     *
+     * @param leftColumn Column to the left of the operator
+     * @param operator The operator used to compare the columns
+     * @param rightColumn Column to the right of the operator
      *
      * @return This builder
      */
-    public B groupBy(@NotNull String column) {
-        groupBys.add(column);
+    public B clause(@NotNull String leftColumn, @NotNull SqlOperator operator, @NotNull String rightColumn) {
+        clauses.add(new Clause(leftColumn, operator, rightColumn));
         return (B) this;
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> SELECT.</p>
+     *
+     * <p>Store the name of one or more columns that will be retrieved.</p>
+     *
+     * @param columns Column name(s) to be retrieved
+     *
+     * @return This bulder
+     */
+    public B column(@NotNull String... columns) {
+        for (String column : columns) {
+            pairs.add(new Pair(column, null));
+        }
+        return (B) this;
+    }
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> SELECT.</p>
+     *
+     * <p>Store the names of the columns in the underlying {@link Model}
+     * base class to be retrieved.</p>
+     *
+     * @param model The model object from which to copy common column names
+     *
+     * @return This builder
+     */
+    public B columnModel(@NotNull Model model) {
+        column(ID_COLUMN, PUBLISHED_COLUMN, UPDATED_COLUMN);
+        return (B) this;
+    }
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE.</p>
+     *
+     * <p>Store the column, operator, and a literal expression value
+     * for a condition that must be satisfied in order to match.</p>
+     *
+     * @param column Column to be matched
+     * @param operator The operator used to compare column and value
+     * @param value Literal expression value to be matched
+     *
+     * @return This builder
+     */
+    public B expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull String value) {
+        clauses.add(new Clause(column, operator, true, value));
+        return (B) this;
+    }
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> SELECT</p>
+     *
+     * <p>Store the name of the column(s) by which results should be grouped.
+     * These will be applied to a statement in the order that they were added.</p>
+     *
+     * @param columns Column name(s) on which to group
+     *
+     * @return This builder
+     */
+    public B groupBy(@NotNull String... columns) {
+        for (String column : columns) {
+            groupBys.add(column);
+        }
+        return (B) this;
+    }
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE</p>
+     *
+     * <p>Cause matching conditions specified by <code>clause()</code>
+     * or <code>expression()</code> to be linked by "OR" instead of "AND".</p>
+     *
+     * @return This builder
+     */
+    public B or() {
+        this.or = true;
+        return (B) this;
+    }
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> SELECT</p>
+     *
      * <p>Store an <code>OrderBy</code> representing the specified column name
-     * and direction.  These will be applied to a SELECT statement in the order
-     * that they were added.</p>
+     * and direction on which results should be sorted.  These will be applied
+     * in the order that they were added.</p>
      *
      * @param column Column name on which to sort
      * @param direction Direction (ascending or descending) for this sort
@@ -78,6 +173,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> INSERT, UPDATE.</p>
+     *
      * <p>Store a paired reference between an SQL column name and a corresponding
      * value to replace it with.  Column names and values will be generated in the
      * order that <code>pair()</code> is called as the builder is assembled.</p>
@@ -91,18 +188,13 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
      * @return This builder
      */
     public B pair(@NotNull String column, Object value) {
-/*
-        if (value instanceof Iterable) {
-            value = Joiner.on(",").skipNulls().join((Iterable<?>) value);
-        } else if (value instanceof Model) {
-            value = ((Model) value).getId();
-        }
-*/
         pairs.add(new Pair(column, value));
         return (B) this;
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> INSERT, UPDATE.</p>
+     *
      * <p>Record a pairing only if the specified value is not <code>null</code>.</p>
      *
      * @param column Name of the SQL column to be included
@@ -118,6 +210,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> INSERT, UPDATE.</p>
+     *
      * <p>Record a pairing for a literal value (such as an SQL function call) that will
      * not be enclosed in quotes in the generated statement.</p>
      *
@@ -132,6 +226,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> INSERT, UPDATE.</p>
+     *
      * <p>Pair the columns and values from those included via the {@link Model}
      * base class in every such object.  The primary key (if any) will be stored
      * separately, via a call to <code>primary()</code>, so that it can be used
@@ -149,9 +245,11 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> All statement types (?).</p>
+     *
      * <p>Add a parameter value that will be used as a replacement value in the
      * generated SQL statement, if required.  These values <strong>MUST</strong>
-     * be recorded in the order of their replacement indicators (such as "?1")
+     * be recorded in the order of their replacement indicators ("?")
      * in the statement text, because they are replaced in numerical sequence.</p>
      *
      * @param param The replacement value to be recorded
@@ -164,6 +262,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> INSERT.</p>
+     *
      * <p>Store the specified name of the primary key column for this object
      * so that it can be retrieved after an INSERT statement is completed.
      *
@@ -180,19 +280,19 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
     }
 
     /**
+     * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE.</p>
+     *
      * <p>Store the specified name and value of the primary key for this object
-     * so that it can be used in the WHERE clause of a DELETE or UPDATE statement.</p>
+     * so that it can be used in the WHERE clause of a DELETE, SELECT, or UPDATE
+     * statement.  If specified on DELETE, SELECT, or UPDATE statements, any
+     * clauses specified by <code>clause()</code> and related methods will
+     * be ignored.</p>
      *
      * <p><strong>NOTE:</strong> If you are dealing with a {@link Model} object,
      * calling <code>pairModel()</code> will have done this for you already.</p>
      *
-     * <p><strong>NOTE:</strong> For an INSERT statement, the primary key reference
-     * is only used to remember the name of the primary key column that will be
-     * generated (any specified value will be ignored).  For a DELETE or UPDATE
-     * statement, it will be used as part of the generated WHERE clause.</p>
-     *
      * @param column Name of the primary key column for this table
-     * @param value Primary key value for this object (ignored for an INSERT statement)
+     * @param value Primary key value for this object
      *
      * @return This builder
      */
@@ -201,89 +301,185 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
         return (B) this;
     }
 
+    /**
+     * <p>Return the string representation of the SQL statement generated by
+     * this builder.  Only includes the SQL text after <code>build()</code> has
+     * been called.  Useful only for debugging the builders themselves.</p>
+     *
+     * @return Values of all the internally stored builder information
+     */
     public String toString() {
-        return this.getClass().getSimpleName() + "[groupBys=" + groupBys + ", orderBys=" + orderBys + ",pairs=" +
-                pairs + ", params=" + params + ", primary=" + primary + ", sql=" + sql + "]";
+        return this.getClass().getSimpleName() +
+                "{clauses=" + clauses + ", groupBys=" + groupBys +
+                ", or=" + or + ", orderBys=" + orderBys + ",pairs=" + pairs +
+                ", params=" + params + ", primary=" + primary + ", sql=" + sql + "}";
     }
 
     // Protected Methods ---------------------------------------------------------
 
-    protected void apply(PreparedStatement statement) throws SQLException {
+    /**
+     * <p>Add a GROUP BY clause to the SQL text being created, if relevant.</p>
+     *
+     * @param sb StringBuilder containing the SQL text being created
+     */
+    protected void addGroupBy(StringBuilder sb) {
+        if (groupBys.size() > 0) {
+            sb.append(" GROUP BY ");
+            boolean first = true;
+            for (String groupBy : groupBys) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                sb.append(groupBy);
+            }
+        }
+    }
+
+    /**
+     * <p>Add an ORDER BY clause to the SQL text being created, if relevant.</p>
+     *
+     * @param sb StringBuilder containing the SQL text being created
+     */
+    protected void addOrderBy(StringBuilder sb) {
+        if (orderBys.size() > 0) {
+            sb.append(" ORDER BY ");
+            boolean first = true;
+            for (OrderBy orderBy : orderBys) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                sb.append(orderBy.column);
+                sb.append(" ");
+                sb.append(orderBy.direction.name());
+            }
+        }
+    }
+
+    /**
+     * <p>Add a WHERE clause to the SQL text being created.  This will either
+     * be a direct primary key match (if <code>primary()</code> was specified)
+     * or one or more conditions (if <code>clause()</code> or <code>expression()</code>
+     * was specified, possibly more than once).  In the latter case, if
+     * <code>or()</code> was specified, the conditions will be linked by OR;
+     * otherwise they will be linked by AND.</p>
+     *
+     * <p>If neither a primary key nor at least one condition was specified,
+     * throw an exception to avoid generating statements that will impact every
+     * row in the underlying table.</p>
+     *
+     * @param sb StringBuilder containing the SQL text being created.
+     */
+    protected void addWhere(StringBuilder sb) throws IllegalStateException {
+
+        if ((primary == null) && (clauses.size() == 0)) {
+            throw new IllegalStateException("Must specify either a primary key or conditions");
+        }
+
+        if (primary != null) {
+
+            // Match on equality to primary key value
+            sb.append(" WHERE (");
+            sb.append(primary.column);
+            sb.append(" = ");
+            if (primary.literal) {
+                sb.append(primary.value);
+            } else {
+                sb.append("?");
+                params.add(primary.value);
+            }
+            sb.append(")");
+
+        } else {
+
+            // Match on specified condition(s)
+            sb.append(" WHERE ");
+            boolean first = true;
+            for (Clause clause : clauses) {
+                if (first) {
+                    first = false;
+                    sb.append("(");
+                } else {
+                    if (or) {
+                        sb.append(" OR (");
+                    } else {
+                        sb.append(" AND (");
+                    }
+                }
+                sb.append(clause.leftColumn);
+                sb.append(" ");
+                sb.append(clause.operator.getOperator());
+                sb.append(" ");
+                if (clause.literal) {
+                    sb.append(clause.rightColumn);
+                } else {
+                    sb.append("?");
+                    params.add(clause.rightColumn);
+                }
+                sb.append(")");
+            }
+
+        }
+
+    }
+
+    /**
+     * <p>Apply any specified parameters to the <code>PreparedStatement</code>
+     * that is being generated.</p>
+     *
+     * @param statement The <code>PreparedStatement</code> to update
+     *
+     * @throws SQLException if a SQL exception occurs
+     */
+    protected void applyParams(PreparedStatement statement) throws SQLException {
         if (params.size() > 0) {
-            for (int i = 0; i < params.size(); i++) {
-                statement.setObject(i + 1, params.get(i));
+            if (statement != null) { // TODO - Mockito does not generate this :-(
+                for (int i = 0; i < params.size(); i++) {
+                    statement.setObject(i + 1, params.get(i));
+                }
             }
         }
     }
 
     // Support classes ---------------------------------------------------------
     
-/*
-    // Simplified from com.google.base.Joiner
-    protected static class Joiner {
+    public static class Clause {
 
-        // Instance Variables ------------------------------------------------
-
-        private String forNull = "null";
-        private final String separator;
-        private boolean skipNulls = false;
-
-        // Constructors ------------------------------------------------------
-
-        protected Joiner(char separator) {
-            this.separator = String.valueOf(separator);
+        Clause(@NotNull String leftColumn, @NotNull SqlOperator operator, @NotNull String rightColumn) {
+            this.leftColumn = leftColumn;
+            this.literal = false;
+            this.operator = operator;
+            this.rightColumn = rightColumn;
         }
 
-        protected Joiner(@NotNull String separator) {
-            this.separator = separator;
+        Clause(@NotNull String leftColumn, @NotNull SqlOperator operator,
+               boolean literal, @NotNull String rightColumn) {
+            this.leftColumn = leftColumn;
+            this.literal = literal;
+            this.operator = operator;
+            this.rightColumn = rightColumn;
         }
 
-        // Static Methods ----------------------------------------------------
+        final String leftColumn;
+        final boolean literal; // Right "column" is actually a literal value
+        final SqlOperator operator;
+        final String rightColumn;
 
-        protected static Joiner on(char separator) {
-            return new Joiner(String.valueOf(separator));
+        @Override
+        public String toString() {
+            return "Clause{" +
+                    "leftColumn=" + leftColumn +
+                    ", literal=" + literal +
+                    ", operator=" + operator +
+                    ", rightColumn=" + rightColumn + "}";
         }
-
-        protected static Joiner on(@NotNull String separator) {
-            return new Joiner(separator);
-        }
-
-        // Builder Methods ---------------------------------------------------
-
-        protected Joiner forNull(String forNull) {
-            this.forNull = forNull;
-            return this;
-        }
-
-        protected Joiner skipNulls() {
-            this.skipNulls = true;
-            return this;
-        }
-
-        // Protected Methods -------------------------------------------------
-
-        protected final String join(Iterable<?> parts) {
-            StringBuilder sb = new StringBuilder();
-            for (Object part : parts) {
-                if (!skipNulls || (part != null)) {
-                    if (sb.length() > 0) {
-                        sb.append(separator);
-                    }
-                    if (part == null) {
-                        sb.append(forNull);
-                    } else {
-                        sb.append(part.toString());
-                    }
-                }
-            }
-            return sb.toString();
-        }
-
 
     }
-*/
 
-    private static class OrderBy {
+    public static class OrderBy {
 
         OrderBy(@NotNull String column, @NotNull SqlDirection direction) {
             this.column = column;
@@ -293,9 +489,17 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
         final String column;
         final SqlDirection direction;
 
+        @Override
+        public String toString() {
+            return "OrderBy{" +
+                    "column=" + column + '\'' +
+                    ", direction='" + direction + "'}";
+
+        }
+
     }
 
-    static class Pair {
+    public class Pair {
         
         Pair(@NotNull String column, Object value) {
             this.column = column;
@@ -317,6 +521,7 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder> imple
         public String toString() {
             return "Pair{" +
                     "column=" + column + '\'' +
+                    ", literal=" + literal +
                     ", value='" + value + "'}";
                     
         }

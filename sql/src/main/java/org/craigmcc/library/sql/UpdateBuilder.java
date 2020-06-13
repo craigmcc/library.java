@@ -20,6 +20,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * <p>Builder that generates a {@link PreparedStatement} for an SQL UPDATE.</p>
+ *
+ * <p>TODO - examples</p>
+ */
 public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
 
     // Constructors ----------------------------------------------------------
@@ -27,8 +32,6 @@ public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
     public UpdateBuilder(@NotNull String table) {
         super(table);
     }
-
-    private final WhereClauseBuilder whereClauseBuilder = new WhereClauseBuilder();
 
     // Public Methods --------------------------------------------------------
 
@@ -38,13 +41,6 @@ public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
         if (pairs.size() < 1) {
             throw new IllegalArgumentException("At least one column+value pair must be specified");
         }
-/*
-        String where = whereClauseBuilder.build();
-        if ("".equals(where)) {
-            throw new IllegalArgumentException("No WHERE conditions specified for this UPDATE");
-        }
-*/
-
         StringBuilder sb = new StringBuilder("UPDATE ")
                 .append(tables.get(0))
                 .append(" SET ");
@@ -67,19 +63,10 @@ public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
             }
         }
 
-//        TODO - is primary key matching part of a where builder or handled here?
-//        sb.append(where); // TODO - append where clause
-//        params.addAll(whereClauseBuilder.params()); // TODO - append params from where clause
-
+        addWhere(sb);
         sql = sb.toString();
         PreparedStatement statement = connection.prepareStatement(sql);
-        if (params.size() > 0) {
-            for (int i = 0; i < params.size(); i++) {
-                if (statement != null) { // TODO - Yay Mockito :-(
-                    statement.setObject(i + 1, params.get(i));
-                }
-            }
-        }
+        applyParams(statement);
         return statement;
 
     }

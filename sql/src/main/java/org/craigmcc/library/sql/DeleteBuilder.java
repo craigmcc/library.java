@@ -20,63 +20,33 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * <p>Builder that generates a {@link PreparedStatement} for an SQL DELETE.</p>
+ *
+ * <p>TODO - examples</p>
+ */
 public class DeleteBuilder extends AbstractStatementBuilder<DeleteBuilder> {
+
+    // Constructors ----------------------------------------------------------
 
     public DeleteBuilder(@NotNull String table) {
         super(table);
     }
 
-    private final WhereClauseBuilder whereClauseBuilder = new WhereClauseBuilder();
+    // Public Methods --------------------------------------------------------
 
     @Override
     public PreparedStatement build(Connection connection) throws SQLException {
-        String sql = toSql();
-        PreparedStatement stmt = connection.prepareStatement(sql);
-        Utils.apply(stmt, whereClauseBuilder.params());
-        return stmt;
-    }
 
-    public DeleteBuilder or() {
-        whereClauseBuilder.or();
-        return this;
-    }
+        StringBuilder sb = new StringBuilder("DELETE FROM ");
+        sb.append(tables.get(0));
 
-    public DeleteBuilder or(boolean or) {
-        whereClauseBuilder.or(or);
-        return this;
-    }
+        addWhere(sb);
+        sql = sb.toString();
+        PreparedStatement statement = connection.prepareStatement(sql);
+        applyParams(statement);
+        return statement;
 
-    public String toSql() {
-        String where = whereClauseBuilder.build();
-        if ("".equals(where)) {
-            throw new IllegalArgumentException("No WHERE conditions specified for this DELETE");
-        }
-        StringBuilder sb = new StringBuilder("DELETE FROM ")
-                .append(tables.get(0))
-                .append(where);
-        return sb.toString();
-    }
-
-    public DeleteBuilder where(@NotNull String column, Object value) {
-        whereClauseBuilder.where(column, value);
-        return this;
-    }
-
-    public DeleteBuilder where(@NotNull String column, @NotNull SqlOperator operator, Object value) {
-        whereClauseBuilder.where(column, operator, value);
-        return this;
-    }
-
-    public DeleteBuilder where(@NotNull String column1, Object value1,
-                               @NotNull String column2, Object value2) {
-        whereClauseBuilder.where(column1, value1, column2, value2);
-        return this;
-    }
-
-    public DeleteBuilder where(@NotNull String column1, @NotNull SqlOperator operator1, Object value1,
-                               @NotNull String column2, @NotNull SqlOperator operator2, Object value2) {
-        whereClauseBuilder.where(column1, operator1, value1, column2, operator2, value2);
-        return this;
     }
 
 }

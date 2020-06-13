@@ -21,9 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * <p>UNUSED but leftover from previous iterations of this package.</p>
+ */
 public class Utils {
-    
-    // TODO - add methods SQLUtils as needed
     
     private static Set<String> literals =
             Set.of("now()", "now(3)");

@@ -22,36 +22,61 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SelectBuilder extends AbstractStatementBuilder {
+/**
+ * <p>Builder that generates a {@link PreparedStatement} for an SQL SELECT.</p>
+ *
+ * <p>TODO - examples</p>
+ */
+public class SelectBuilder extends AbstractStatementBuilder<SelectBuilder> {
 
-    public static final String COUNT_COLUMN = "count(*)";
+    // Instance Variables ----------------------------------------------------
+
+    // TODO - make these available, and move to AbstractStatementBuilder?
+    private int count = -1; // Maximum number of rows to match
+    private boolean distinct = false;
+    private int offset = 0; // Skip this many rows before matching
+
+    // Static Variables ------------------------------------------------------
+
+    // TODO - add a way to utilize this instead of column names?
+    public static final String COUNT_LITERAL = "count(*)";
+
+    // Constructors ----------------------------------------------------------
 
     public SelectBuilder(@NotNull String table) {
         super(table);
     }
 
-    private final List<String> columns = new LinkedList<>();
-    private int count = -1;
-    private boolean distinct = false;
-    private int startIndex = 0;
-    private final WhereClauseBuilder whereClauseBuilder = new WhereClauseBuilder();
+    // Public Methods --------------------------------------------------------
 
     @Override
     public PreparedStatement build(Connection connection) throws SQLException {
-        return null; // TODO
-    }
 
-    // TODO - lots to finish here
-
-    private static class OrderBy {
-
-        OrderBy(@NotNull String column, @NotNull SqlDirection direction) {
-            this.column = column;
-            this.direction = direction;
+        StringBuilder sb = new StringBuilder("SELECT ");
+        if (pairs.size() == 0) {
+            sb.append("*");
+        } else {
+            boolean first = true;
+            for (Pair pair : pairs) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+                sb.append(pair.column);
+            }
         }
 
-        final String column;
-        final SqlDirection direction;
+        sb.append(" FROM ");
+        sb.append(tables.get(0));
+        addWhere(sb);
+        addGroupBy(sb);
+        addOrderBy(sb);
+
+        sql = sb.toString();
+        PreparedStatement statement = connection.prepareStatement(sql);
+        applyParams(statement);
+        return statement;
 
     }
 

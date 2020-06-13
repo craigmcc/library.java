@@ -19,6 +19,9 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>UNUSED but leftover from previous iterations of this package.</p>
+ */
 public class WhereClauseBuilder {
     
     public static final char ESCAPER = '\\';
