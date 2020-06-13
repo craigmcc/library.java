@@ -38,6 +38,18 @@
     <!-- Dependencies -->
     <dependencies>
 
+        <!-- Java Standard Annotation APIs -->
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+
+        <!-- Java Bean Validation APIs -->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+        </dependency>
+
         <!-- Hamcrest Matchers for tests -->
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -49,6 +61,20 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Library: Model-JDBC Module -->
+        <dependency>
+            <groupId>org.craigmcc.library</groupId>
+            <artifactId>model-jdbc</artifactId>
+            <version>${model-jdbc.version}</version>
+        </dependency>
+
+        <!-- Mockito Testing Core Library -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
 
