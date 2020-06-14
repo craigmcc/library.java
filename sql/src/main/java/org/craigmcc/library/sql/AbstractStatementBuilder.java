@@ -41,7 +41,10 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
     // Instance Variables ----------------------------------------------------
 
     protected final List<Clause> clauses = new ArrayList<>();
+    protected boolean distinct = false;
     protected final List<String> groupBys = new ArrayList<>();
+    protected Integer limit;
+    protected Integer offset;
     protected boolean or = false;
     protected final List<OrderBy> orderBys = new ArrayList<>();
     protected final List<Pair> pairs = new ArrayList<>();
@@ -74,37 +77,6 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     public B clause(@NotNull String leftColumn, @NotNull SqlOperator operator, @NotNull String rightColumn) {
         clauses.add(new Clause(leftColumn, operator, rightColumn));
-        return (B) this;
-    }
-
-    /**
-     * <p><strong>RELEVANT ON:</strong> SELECT.</p>
-     *
-     * <p>Store the name of one or more columns that will be retrieved.</p>
-     *
-     * @param columns Column name(s) to be retrieved
-     *
-     * @return This bulder
-     */
-    public B column(@NotNull String... columns) {
-        for (String column : columns) {
-            pairs.add(new Pair(column, null));
-        }
-        return (B) this;
-    }
-
-    /**
-     * <p><strong>RELEVANT ON:</strong> SELECT.</p>
-     *
-     * <p>Store the names of the columns in the underlying {@link Model}
-     * base class to be retrieved.</p>
-     *
-     * @param model The model object from which to copy common column names
-     *
-     * @return This builder
-     */
-    public B columnModel(@NotNull Model model) {
-        column(ID_COLUMN, PUBLISHED_COLUMN, UPDATED_COLUMN);
         return (B) this;
     }
 
@@ -310,7 +282,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     public String toString() {
         return this.getClass().getSimpleName() +
-                "{clauses=" + clauses + ", groupBys=" + groupBys +
+                "{clauses=" + clauses + ", distinct=" + distinct +
+                ", groupBys=" + groupBys + ", limit=" + limit + ", offset=" + offset +
                 ", or=" + or + ", orderBys=" + orderBys + ",pairs=" + pairs +
                 ", params=" + params + ", primary=" + primary + ", sql=" + sql + "}";
     }
@@ -371,7 +344,7 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      * throw an exception to avoid generating statements that will impact every
      * row in the underlying table.</p>
      *
-     * @param sb StringBuilder containing the SQL text being created.
+     * @param sb StringBuilder containing the SQL text being created
      */
     protected void addWhere(StringBuilder sb) throws IllegalStateException {
 

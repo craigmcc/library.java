@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * <p>UNUSED but leftover from previous iterations of this package.</p>
  */
-public class WhereClauseBuilder {
+class WhereClauseBuilder {
     
     public static final char ESCAPER = '\\';
     public static final char WILDCARD = '%';

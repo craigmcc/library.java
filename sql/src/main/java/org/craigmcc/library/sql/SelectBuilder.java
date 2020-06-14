@@ -15,6 +15,8 @@
  */
 package org.craigmcc.library.sql;
 
+import org.craigmcc.library.model.Model;
+
 import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,19 +24,16 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.craigmcc.library.model.Constants.ID_COLUMN;
+import static org.craigmcc.library.model.Constants.PUBLISHED_COLUMN;
+import static org.craigmcc.library.model.Constants.UPDATED_COLUMN;
+
 /**
  * <p>Builder that generates a {@link PreparedStatement} for an SQL SELECT.</p>
  *
  * <p>TODO - examples</p>
  */
 public class SelectBuilder extends AbstractStatementBuilder<SelectBuilder> {
-
-    // Instance Variables ----------------------------------------------------
-
-    // TODO - make these available, and move to AbstractStatementBuilder?
-    private int count = -1; // Maximum number of rows to match
-    private boolean distinct = false;
-    private int offset = 0; // Skip this many rows before matching
 
     // Static Variables ------------------------------------------------------
 
@@ -53,6 +52,9 @@ public class SelectBuilder extends AbstractStatementBuilder<SelectBuilder> {
     public PreparedStatement build(Connection connection) throws SQLException {
 
         StringBuilder sb = new StringBuilder("SELECT ");
+        if (distinct) {
+            sb.append("DISTINCT ");
+        }
         if (pairs.size() == 0) {
             sb.append("*");
         } else {
@@ -72,12 +74,91 @@ public class SelectBuilder extends AbstractStatementBuilder<SelectBuilder> {
         addWhere(sb);
         addGroupBy(sb);
         addOrderBy(sb);
+        addLimit(sb);
+        addOffset(sb);
 
         sql = sb.toString();
         PreparedStatement statement = connection.prepareStatement(sql);
         applyParams(statement);
         return statement;
 
+    }
+
+    /**
+     * <p>Store the name of one or more columns that will be retrieved.</p>
+     *
+     * @param columns Column name(s) to be retrieved
+     *
+     * @return This bulder
+     */
+    public SelectBuilder column(@NotNull String... columns) {
+        for (String column : columns) {
+            pairs.add(new Pair(column, null));
+        }
+        return this;
+    }
+
+    /**
+     * <p>Store the names of the columns in the underlying {@link Model}
+     * base class to be retrieved.</p>
+     *
+     * @param model The model object from which to copy common column names
+     *
+     * @return This builder
+     */
+    public SelectBuilder columnModel(@NotNull Model model) {
+        column(ID_COLUMN, PUBLISHED_COLUMN, UPDATED_COLUMN);
+        return this;
+    }
+
+    /**
+     * <p>Add the specified limit on the number of rows to be returned.
+     * Default is however many rows they are starting from the offset position.</p>
+     *
+     * @param limit The maximum number of rows to be returned
+     *
+     * @return This builder
+     */
+    public SelectBuilder limit(Integer limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+     * <p>Add the specified offset (number of rows to skip at the beginning
+     * of the matched set).  Default is zero (no rows are skipped).</p>
+     *
+     * @param offset The number of rows to be skipped
+     *
+     * @return This builder
+     */
+    public SelectBuilder offset(Integer offset) {
+        this.offset = offset;
+        return this;
+    }
+
+    // Protected Methods -----------------------------------------------------
+
+    /**
+     * <p>Add a LIMIT clause, if it was requested.</p>
+     *
+     * @param sb StringBuilder containing the SQL text being created
+     */
+    protected void addLimit(StringBuilder sb) {
+        if (limit != null) {
+            sb.append(" LIMIT " + limit);
+        }
+    }
+
+    /**
+     * <p>Add an OFFSET clause, if it was requested.</p>
+     *
+     * @param sb StringBuilder containing the SQL text being created
+     */
+    protected void addOffset(StringBuilder sb) {
+        if (offset != null) {
+            sb.append(" OFFSET " + offset);
+        }
     }
 
 }
