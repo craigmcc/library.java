@@ -35,11 +35,14 @@ public interface StatementBuilder {
     // Public Methods --------------------------------------------------------
 
     /**
-     * <p></p>Generate and return an JDBC <code>PreparedStatement</code> from this builder,
-     * incorporating the paired replacements, where conditions, and order by condition(s)
-     * (if any), and any replacement parameters that were specified.</p>
+     * <p>Generate and return an JDBC <code>PreparedStatement</code> from
+     * this builder, incorporating the paired replacements, where conditions,
+     * and order by condition(s) (if any), and any replacement parameters
+     * that were specified.  Replacement values for "?" placeholders will
+     * have already been applied to the statement, in the correct order.</p>
      *
-     * @param connection The JDBC connection for which to create the prepared statement
+     * @param connection The JDBC connection for which to create the
+     *                  prepared statement
      *
      * @return A <code>PreparedStatement</code> ready to be executed
      *

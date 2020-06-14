@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 public class AbstractUnitTest {
 
     protected static Connection connection = Mockito.mock(Connection.class);
+    protected static final String MY_TABLE = "mytable";
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -40,13 +41,15 @@ public class AbstractUnitTest {
         ConcreteModel() {
         }
 
-        ConcreteModel(String firstName, String lastName) {
+        ConcreteModel(String firstName, String lastName, Integer points) {
             this.firstName = firstName;
             this.lastName = lastName;
+            this.points = points;
         }
 
         private String firstName;
         private String lastName;
+        private Integer points;
 
         public String getFirstName() {
             return firstName;
@@ -64,10 +67,19 @@ public class AbstractUnitTest {
             this.lastName = lastName;
         }
 
+        public Integer getPoints() {
+            return points;
+        }
+
+        public void setPoints(Integer points) {
+            this.points = points;
+        }
+
         @Override
         public void copy(ConcreteModel that) {
             this.firstName = that.firstName;
             this.lastName = that.lastName;
+            this.points = that.points;
         }
     }
 

@@ -40,7 +40,9 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
 
     // Instance Variables ----------------------------------------------------
 
+    protected boolean all = false;
     protected final List<Clause> clauses = new ArrayList<>();
+    protected final List<Expression> expressions = new ArrayList<>();
     protected boolean distinct = false;
     protected final List<String> groupBys = new ArrayList<>();
     protected Integer limit;
@@ -61,6 +63,17 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
     }
 
     // Public Methods --------------------------------------------------------
+
+    /**
+     * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE</p>
+     *
+     * <p>Indicate that we really do want this statement to affect all rows in the table
+     * (otherwise this will generate an IllegalStateException).</p>
+     */
+    public B all() {
+        all = true;
+        return (B) this;
+    }
 
     /**
      * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE.</p>
@@ -88,29 +101,12 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      *
      * @param column Column to be matched
      * @param operator The operator used to compare column and value
-     * @param value Literal expression value to be matched
+     * @param expression Literal expression value to be matched
      *
      * @return This builder
      */
-    public B expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull String value) {
-        clauses.add(new Clause(column, operator, true, value));
-        return (B) this;
-    }
-
-    /**
-     * <p><strong>RELEVANT ON:</strong> SELECT</p>
-     *
-     * <p>Store the name of the column(s) by which results should be grouped.
-     * These will be applied to a statement in the order that they were added.</p>
-     *
-     * @param columns Column name(s) on which to group
-     *
-     * @return This builder
-     */
-    public B groupBy(@NotNull String... columns) {
-        for (String column : columns) {
-            groupBys.add(column);
-        }
+    public B expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull Object expression) {
+        expressions.add(new Expression(column, operator, expression));
         return (B) this;
     }
 
@@ -124,23 +120,6 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     public B or() {
         this.or = true;
-        return (B) this;
-    }
-
-    /**
-     * <p><strong>RELEVANT ON:</strong> SELECT</p>
-     *
-     * <p>Store an <code>OrderBy</code> representing the specified column name
-     * and direction on which results should be sorted.  These will be applied
-     * in the order that they were added.</p>
-     *
-     * @param column Column name on which to sort
-     * @param direction Direction (ascending or descending) for this sort
-     *
-     * @return This builder
-     */
-    public B orderBy(@NotNull String column, @NotNull SqlDirection direction) {
-        orderBys.add(new OrderBy(column, direction));
         return (B) this;
     }
 
@@ -192,7 +171,7 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      *
      * @return This builder
      */
-    public B pairLiteral(@NotNull String column, @NotNull String value) {
+    public B pairLiteral(@NotNull String column, @NotNull Object value) {
         pairs.add(new Pair(column, true, value));
         return (B) this;
     }
@@ -217,41 +196,6 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
     }
 
     /**
-     * <p><strong>RELEVANT ON:</strong> All statement types (?).</p>
-     *
-     * <p>Add a parameter value that will be used as a replacement value in the
-     * generated SQL statement, if required.  These values <strong>MUST</strong>
-     * be recorded in the order of their replacement indicators ("?")
-     * in the statement text, because they are replaced in numerical sequence.</p>
-     *
-     * @param param The replacement value to be recorded
-     *
-     * @return This builder
-     */
-    public B param(Object param) {
-        params.add(param);
-        return (B) this;
-    }
-
-    /**
-     * <p><strong>RELEVANT ON:</strong> INSERT.</p>
-     *
-     * <p>Store the specified name of the primary key column for this object
-     * so that it can be retrieved after an INSERT statement is completed.
-     *
-     * <p><strong>NOTE:</strong> If you are dealing with a {@link Model} object,
-     * calling <code>pairModel()</code> will have done this for you already.</p>
-     *
-     * @param column Name of the primary key column for this table
-     *
-     * @return This builder
-     */
-    public B primary(@NotNull String column) {
-        this.primary = new Pair(column, null);
-        return (B) this;
-    }
-
-    /**
      * <p><strong>RELEVANT ON:</strong> DELETE, SELECT, UPDATE.</p>
      *
      * <p>Store the specified name and value of the primary key for this object
@@ -269,7 +213,7 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      * @return This builder
      */
     public B primary(@NotNull String column, Object value) {
-        this.primary = new Pair(column, value);
+        this.primary = new Pair(column, true, value);
         return (B) this;
     }
 
@@ -282,55 +226,14 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     public String toString() {
         return this.getClass().getSimpleName() +
-                "{clauses=" + clauses + ", distinct=" + distinct +
+                "{all=" + all + ", clauses=" + clauses + ", distinct=" + distinct +
+                ", expressions=" + expressions +
                 ", groupBys=" + groupBys + ", limit=" + limit + ", offset=" + offset +
                 ", or=" + or + ", orderBys=" + orderBys + ",pairs=" + pairs +
                 ", params=" + params + ", primary=" + primary + ", sql=" + sql + "}";
     }
 
     // Protected Methods ---------------------------------------------------------
-
-    /**
-     * <p>Add a GROUP BY clause to the SQL text being created, if relevant.</p>
-     *
-     * @param sb StringBuilder containing the SQL text being created
-     */
-    protected void addGroupBy(StringBuilder sb) {
-        if (groupBys.size() > 0) {
-            sb.append(" GROUP BY ");
-            boolean first = true;
-            for (String groupBy : groupBys) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
-                sb.append(groupBy);
-            }
-        }
-    }
-
-    /**
-     * <p>Add an ORDER BY clause to the SQL text being created, if relevant.</p>
-     *
-     * @param sb StringBuilder containing the SQL text being created
-     */
-    protected void addOrderBy(StringBuilder sb) {
-        if (orderBys.size() > 0) {
-            sb.append(" ORDER BY ");
-            boolean first = true;
-            for (OrderBy orderBy : orderBys) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
-                sb.append(orderBy.column);
-                sb.append(" ");
-                sb.append(orderBy.direction.name());
-            }
-        }
-    }
 
     /**
      * <p>Add a WHERE clause to the SQL text being created.  This will either
@@ -348,7 +251,12 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     protected void addWhere(StringBuilder sb) throws IllegalStateException {
 
-        if ((primary == null) && (clauses.size() == 0)) {
+        // Allow no WHERE conditions only if it was explicitly requested
+        if (all) {
+            return;
+        }
+        // Otherwise, some condition(s) must have been explicitly requested
+        if ((primary == null) && (clauses.size() == 0) && (expressions.size() == 0)) {
             throw new IllegalStateException("Must specify either a primary key or conditions");
         }
 
@@ -371,6 +279,8 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
             // Match on specified condition(s)
             sb.append(" WHERE ");
             boolean first = true;
+
+            // First, do clauses (comparison between two column values)
             for (Clause clause : clauses) {
                 if (first) {
                     first = false;
@@ -386,17 +296,48 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
                 sb.append(" ");
                 sb.append(clause.operator.getOperator());
                 sb.append(" ");
-                if (clause.literal) {
-                    sb.append(clause.rightColumn);
+                sb.append(clause.rightColumn);
+                sb.append(")");
+            }
+
+            // Second, do expressions (comparison between a column value and a literal)
+            for (Expression expression : expressions) {
+                if (first) {
+                    first = false;
+                    sb.append("(");
                 } else {
-                    sb.append("?");
-                    params.add(clause.rightColumn);
+                    if (or) {
+                        sb.append(" OR (");
+                    } else {
+                        sb.append(" AND (");
+                    }
                 }
+                sb.append(expression.column);
+                sb.append(" ");
+                sb.append(expression.operator.getOperator());
+                sb.append(" ");
+                sb.append(expression.expression);
                 sb.append(")");
             }
 
         }
 
+    }
+
+    /**
+     * <p>Add a parameter value that will be used as a replacement value in the
+     * generated SQL statement, if required.  These values <strong>MUST</strong>
+     * be recorded in the order of their replacement indicators ("?")
+     * in the generated statement text, because they are replaced
+     * in the order of calls to this method.</p>
+     *
+     * @param param The replacement value to be recorded
+     *
+     * @return This builder
+     */
+    protected B addParam(Object param) {
+        params.add(param);
+        return (B) this;
     }
 
     /**
@@ -418,41 +359,64 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
     }
 
     // Support classes ---------------------------------------------------------
-    
-    public static class Clause {
+
+    /**
+     * <p>A first column name, SQL operator, and second column name denoting
+     * two columns that will be compared (according to the specified operator
+     * in a WHERE clause.</p>
+     */
+    protected static class Clause {
 
         Clause(@NotNull String leftColumn, @NotNull SqlOperator operator, @NotNull String rightColumn) {
             this.leftColumn = leftColumn;
-            this.literal = false;
-            this.operator = operator;
-            this.rightColumn = rightColumn;
-        }
-
-        Clause(@NotNull String leftColumn, @NotNull SqlOperator operator,
-               boolean literal, @NotNull String rightColumn) {
-            this.leftColumn = leftColumn;
-            this.literal = literal;
             this.operator = operator;
             this.rightColumn = rightColumn;
         }
 
         final String leftColumn;
-        final boolean literal; // Right "column" is actually a literal value
         final SqlOperator operator;
-        final String rightColumn;
+        final Object rightColumn;
 
         @Override
         public String toString() {
             return "Clause{" +
                     "leftColumn=" + leftColumn +
-                    ", literal=" + literal +
                     ", operator=" + operator +
                     ", rightColumn=" + rightColumn + "}";
         }
 
     }
 
-    public static class OrderBy {
+    /**
+     * <p>A column name, SQL operator, and literal value to which that column
+     * will be compared in a WHERE clause.</p>
+     */
+    protected static class Expression {
+
+        Expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull Object expression) {
+            this.column = column;
+            this.operator = operator;
+            this.expression = expression;
+        }
+
+        final String column;
+        final Object expression;
+        final SqlOperator operator;
+
+        @Override
+        public String toString() {
+            return "Clause{" +
+                    "column=" + column +
+                    ", operator=" + operator +
+                    ", expression=" + expression + "}";
+        }
+
+    }
+
+    /**
+     * <p>A column name and direction to be included in an ORDER BY clause.</p>
+     */
+    protected static class OrderBy {
 
         OrderBy(@NotNull String column, @NotNull SqlDirection direction) {
             this.column = column;
@@ -472,7 +436,12 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
 
     }
 
-    public class Pair {
+    /**
+     * <p>A column name, and a value to be stored on an INSERT or UPDATE,
+     * with the value being either a literal expression (literal == true)
+     * or an object that will be the value inserted or updated.</p>
+     */
+    protected class Pair {
         
         Pair(@NotNull String column, Object value) {
             this.column = column;
@@ -493,9 +462,9 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
         @Override
         public String toString() {
             return "Pair{" +
-                    "column=" + column + '\'' +
+                    "column=" + column +
                     ", literal=" + literal +
-                    ", value='" + value + "'}";
+                    ", value=" + value + "}";
                     
         }
     

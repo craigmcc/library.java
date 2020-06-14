@@ -15,6 +15,8 @@
  */
 package org.craigmcc.library.sql;
 
+import org.craigmcc.library.model.Model;
+
 import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,11 +55,8 @@ import java.sql.SQLException;
  *
  * <p><strong>USAGE NOTES:</strong></p>
  * <ul>
- *     <li>Some of the methods defined below are only relevant for certain
- *         SQL statement types (DELETE, INSERT, SELECT, UPDATE).  Using them
- *         on a different type will cause that information to be ignored.
- *         See the detailed documentation for each method that is only
- *         relevant for some statement types.</li>
+ *     <li>You may only utilize decorator methods that are marked as being
+ *         relevant for INSERT statements, or exist only in this class.</li>
  *     <li>In order to to retrieve the generated primary key for the new row,
  *         you will need to save a reference to the generated
  *         <code>PreparedStatement</code>, and call <code>getGeneratedKeys()</code>
@@ -114,7 +113,7 @@ public class InsertBuilder extends AbstractStatementBuilder<InsertBuilder> {
                 sb.append(pair.value);
             } else {
                 sb.append("?");
-                param(pair.value);
+                addParam(pair.value);
             }
         }
         sb.append(")");
@@ -130,6 +129,22 @@ public class InsertBuilder extends AbstractStatementBuilder<InsertBuilder> {
         applyParams(statement);
         return statement;
 
+    }
+
+    /**
+     * <p>Store the specified name of the primary key column for this object
+     * so that it can be retrieved after an INSERT statement is completed.
+     *
+     * <p><strong>NOTE:</strong> If you are dealing with a {@link Model} object,
+     * calling <code>pairModel()</code> will have done this for you already.</p>
+     *
+     * @param column Name of the primary key column for this table
+     *
+     * @return This builder
+     */
+    public InsertBuilder primary(@NotNull String column) {
+        this.primary = new Pair(column, null);
+        return this;
     }
 
 }

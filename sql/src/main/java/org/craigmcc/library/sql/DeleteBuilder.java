@@ -15,15 +15,27 @@
  */
 package org.craigmcc.library.sql;
 
+import org.craigmcc.library.model.Model;
+
 import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.craigmcc.library.model.Constants.ID_COLUMN;
+
 /**
  * <p>Builder that generates a {@link PreparedStatement} for an SQL DELETE.</p>
  *
  * <p>TODO - examples</p>
+ *
+ * <p><strong>USAGE NOTES:</strong></p>
+ * <ul>
+ *     <li>You may only utilize decorator methods that are marked as being
+ *         relevant for DELETE statements, or exist only in this class.</li>
+ *     <li>Be sure to call <code>close()</code> on the <code>PreparedStatement</code>
+ *         when you are done with it.</li>
+ * </ul>
  */
 public class DeleteBuilder extends AbstractStatementBuilder<DeleteBuilder> {
 
@@ -47,6 +59,18 @@ public class DeleteBuilder extends AbstractStatementBuilder<DeleteBuilder> {
         applyParams(statement);
         return statement;
 
+    }
+
+    /**
+     * <p>Record the primary key name and value for generating a WHERE condition.</p>
+     *
+     * @param model Model object from which to extract primary key information
+     *
+     * @return This builder
+     */
+    public DeleteBuilder model(Model model) {
+        primary(ID_COLUMN, model.getId());
+        return this;
     }
 
 }

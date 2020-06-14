@@ -23,54 +23,64 @@ import java.time.LocalDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-
 public class InsertBuilderUnitTest extends AbstractUnitTest {
 
     @Test
     public void insert() throws Exception {
-        InsertBuilder builder = new InsertBuilder("mytable")
+        InsertBuilder builder = new InsertBuilder(MY_TABLE)
                 .pair("firstName", "Fred")
-                .pair("lastName", "Flintstone");
+                .pair("lastName", "Flintstone")
+                .pair("points", 111);
         PreparedStatement statement = builder.build(connection);
         System.out.println("insert: " + builder.toString());
-        assertThat(builder.sql, is("INSERT INTO mytable (firstName, lastName) VALUES (?, ?)"));
+        assertThat(builder.sql,
+                is("INSERT INTO " + MY_TABLE +
+                        " (firstName, lastName, points) VALUES (?, ?, ?)"));
     }
 
     @Test
     public void insertWithLiteral() throws Exception {
-        InsertBuilder builder = new InsertBuilder("mytable")
+        InsertBuilder builder = new InsertBuilder(MY_TABLE)
                 .pairLiteral("firstName", "'Wilma'")
-                .pair("lastName", "Flintstone");
+                .pair("lastName", "Flintstone")
+                .pairLiteral("points", 222);
         PreparedStatement statement = builder.build(connection);
         System.out.println("insertWithLiteral: " + builder.toString());
-        assertThat(builder.sql, is("INSERT INTO mytable " +
-                "(firstName, lastName) VALUES ('Wilma', ?)"));
+        assertThat(builder.sql,
+                is("INSERT INTO " + MY_TABLE +
+                " (firstName, lastName, points) VALUES ('Wilma', ?, 222)"));
     }
 
     @Test
     public void insertWithModel() throws Exception {
-        ConcreteModel model = new ConcreteModel("Barney", "Rubble");
+        ConcreteModel model = new ConcreteModel("Barney", "Rubble", 123);
         model.setId(123L);
         model.setPublished(LocalDateTime.now());
         model.setUpdated(model.getPublished());
-        InsertBuilder builder = new InsertBuilder("mytable")
+        InsertBuilder builder = new InsertBuilder(MY_TABLE)
                 .pairModel(model)
                 .pair("firstName", "Barney")
-                .pair("lastName", "Rubble");
+                .pair("lastName", "Rubble")
+                .pair("points", 333);
         PreparedStatement statement = builder.build(connection);
         System.out.println("insertWithModel: " + builder.toString());
-        assertThat(builder.sql, is("INSERT INTO mytable (published, updated, firstName, lastName) VALUES (?, ?, ?, ?)"));
+        assertThat(builder.sql,
+                is("INSERT INTO " + MY_TABLE +
+                        " (published, updated, firstName, lastName, points)" +
+                        " VALUES (?, ?, ?, ?, ?)"));
     }
 
     @Test
     public void insertWithPrimaryKey() throws Exception {
-        InsertBuilder builder = new InsertBuilder("mytable")
+        InsertBuilder builder = new InsertBuilder(MY_TABLE)
                 .pair("firstName", "Fred")
                 .pair("lastName", "Flintstone")
-                .primary("id");
+                .primary("id"); // Should be ignored
         PreparedStatement statement = builder.build(connection);
         System.out.println("insertWithPrimaryKey: " + builder.toString());
-        assertThat(builder.sql, is("INSERT INTO mytable (firstName, lastName) VALUES (?, ?)"));
+        assertThat(builder.sql,
+                is("INSERT INTO " + MY_TABLE +
+                        " (firstName, lastName) VALUES (?, ?)"));
     }
 
 }

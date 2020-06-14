@@ -24,6 +24,14 @@ import java.sql.SQLException;
  * <p>Builder that generates a {@link PreparedStatement} for an SQL UPDATE.</p>
  *
  * <p>TODO - examples</p>
+ *
+ * <p><strong>USAGE NOTES:</strong></p>
+ * <ul>
+ *     <li>You may only utilize decorator methods that are marked as being
+ *         relevant for UPDATE statements, or exist only in this class.</li>
+ *     <li>Be sure to call <code>close()</code> on the <code>PreparedStatement</code>
+ *         when you are done with it.</li>
+ * </ul>
  */
 public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
 
@@ -59,7 +67,7 @@ public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
                 sb.append(pair.value);
             } else {
                 sb.append("?");
-                param(pair.value);
+                addParam(pair.value);
             }
         }
 
