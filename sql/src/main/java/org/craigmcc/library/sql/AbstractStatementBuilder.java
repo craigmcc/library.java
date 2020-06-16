@@ -101,12 +101,12 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      *
      * @param column Column to be matched
      * @param operator The operator used to compare column and value
-     * @param expression Literal expression value to be matched
+     * @param value Literal expression value to be matched
      *
      * @return This builder
      */
-    public B expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull Object expression) {
-        expressions.add(new Expression(column, operator, expression));
+    public B expression(@NotNull String column, @NotNull SqlOperator operator, @NotNull Object value) {
+        expressions.add(new Expression(column, operator, value));
         return (B) this;
     }
 

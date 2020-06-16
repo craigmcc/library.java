@@ -47,7 +47,7 @@ public class DeleteBuilderUnitTest extends AbstractUnitTest {
 
     @Test
     public void deleteWithAnd() throws Exception {
-        DeleteBuilder builder = new DeleteBuilder("mytable")
+        DeleteBuilder builder = new DeleteBuilder(MY_TABLE)
                 .expression("firstName", GE, "'Fred'")
                 .expression("points", LT, 100);
         PreparedStatement statement = builder.build(connection);
@@ -59,7 +59,7 @@ public class DeleteBuilderUnitTest extends AbstractUnitTest {
 
     @Test
     public void deleteWithClause() throws Exception {
-        DeleteBuilder builder = new DeleteBuilder("mytable")
+        DeleteBuilder builder = new DeleteBuilder(MY_TABLE)
                 .clause("firstName", NE, "lastName");
         PreparedStatement statement = builder.build(connection);
         System.out.println("deleteWithClause: " + builder.toString());
