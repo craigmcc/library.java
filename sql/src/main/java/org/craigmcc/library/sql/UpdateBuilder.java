@@ -33,7 +33,8 @@ import java.sql.SQLException;
  *         when you are done with it.</li>
  * </ul>
  */
-public class UpdateBuilder extends AbstractStatementBuilder<UpdateBuilder> {
+public class UpdateBuilder extends MutatingStatementBuilder<UpdateBuilder>
+        implements StatementBuilder {
 
     // Constructors ----------------------------------------------------------
 

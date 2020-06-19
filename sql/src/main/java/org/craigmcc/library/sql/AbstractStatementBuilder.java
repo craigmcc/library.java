@@ -190,6 +190,7 @@ public abstract class AbstractStatementBuilder<B extends StatementBuilder>
      */
     public B pairModel(@NotNull Model model) {
         primary(ID_COLUMN, model.getId());
+        // TODO - verify LocalDateTime conversions are supported
         pair(PUBLISHED_COLUMN, model.getPublished());
         pair(UPDATED_COLUMN, model.getUpdated());
         return (B) this;

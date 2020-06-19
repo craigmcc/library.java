@@ -65,7 +65,7 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
-        <!-- Microprofiule OpenAPI APIs -->
+        <!-- Microprofile OpenAPI APIs -->
         <dependency>
             <groupId>org.eclipse.microprofile.openapi</groupId>
             <artifactId>microprofile-openapi-api</artifactId>

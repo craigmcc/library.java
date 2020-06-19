@@ -67,7 +67,8 @@ import java.sql.SQLException;
  *         when you are done with it.</li>
  * </ul>
  */
-public class InsertBuilder extends AbstractStatementBuilder<InsertBuilder> {
+public class InsertBuilder extends MutatingStatementBuilder<InsertBuilder>
+        implements StatementBuilder {
 
     // Constructors ----------------------------------------------------------
 
