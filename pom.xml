@@ -51,6 +51,7 @@
     <modules>
         <module>model-jdbc</module>
         <module>model-jpa</module>
+        <module>shared</module>
         <module>sql</module>
     </modules>
 
@@ -67,6 +68,8 @@
         <!-- Version Dependencies -->
         <model-jdbc.version>1.0.0-SNAPSHOT</model-jdbc.version>
         <model-jpa.version>1.0.0-SNAPSHOT</model-jpa.version>
+        <shared.version>1.0.0-SNAPSHOT</shared.version>
+        <sql.version>1.0.0-SNAPSHOT</sql.version>
 
     </properties>
 

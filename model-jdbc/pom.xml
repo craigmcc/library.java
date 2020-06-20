@@ -64,6 +64,13 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
+        <!-- Personal Library: Shared Module -->
+        <dependency>
+            <groupId>org.craigmcc.library</groupId>
+            <artifactId>shared</artifactId>
+            <version>${shared.version}</version>
+        </dependency>
+
         <!-- Microprofile OpenAPI APIs -->
         <dependency>
             <groupId>org.eclipse.microprofile.openapi</groupId>

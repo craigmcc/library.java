@@ -27,8 +27,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sql</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
 
     <name>SQL Statement Helpers</name>
     <description>
