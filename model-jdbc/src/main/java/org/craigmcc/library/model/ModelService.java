@@ -24,6 +24,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Abstract base class for persistent storage of {@link Model} objects, and related
@@ -87,6 +88,7 @@ public abstract class ModelService<M extends Model> {
     /**
      * <p>Update and return the specified {@link Model} object.</p>
      *
+     * @param id Parimary key of the specified {@link Model} object.
      * @param model The {@link Model} object to be updated.
      *
      * @return The {@link Model} object with <code>updated</code> field updated.
@@ -96,7 +98,7 @@ public abstract class ModelService<M extends Model> {
      * @throws NotFound If no object with the specified primary key can be found.
      * @throws NotUnique If a uniqueness constraint has been violated.
      */
-    public abstract @NotNull M update(@NotNull M model)
+    public abstract @NotNull M update(@NotNull Long id, @NotNull M model)
             throws BadRequest, InternalServerError, NotFound, NotUnique;
 
     // Protected Methods -----------------------------------------------------
@@ -112,16 +114,15 @@ public abstract class ModelService<M extends Model> {
         return sb.toString();
     }
 
-/*
-    protected void handlePersistenceException(@NotNull PersistenceException e) throws BadRequest, InternalServerError {
-        if ((e.getCause() != null) && (e.getCause() instanceof ConstraintViolationException)) {
-            throw new BadRequest(formatMessage((ConstraintViolationException) e.getCause()));
-        } else if (e.getCause() != null) {
-            throw new BadRequest("foreignKey: Foreign key or unique key constraint violated");
-        } else {
-            throw new InternalServerError(e);
+    protected String formatMessage(Set<ConstraintViolation<M>> violations) {
+        StringBuffer sb = new StringBuffer();
+        for (ConstraintViolation constraintViolation : violations) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(constraintViolation.getMessage());
         }
+        return sb.toString();
     }
-*/
 
 }
